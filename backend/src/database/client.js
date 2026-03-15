@@ -5,10 +5,10 @@ const pool = new Pool(
   process.env.DATABASE_URL 
     ? { connectionString: process.env.DATABASE_URL }
     : {
-        user: process.env.PG_USER || 'postgres',
+        user: process.env.PG_USER || 'admin',
         host: process.env.PG_HOST || 'localhost',
-        database: process.env.PG_DATABASE || 'midnight_gate',
-        password: process.env.PG_PASSWORD || 'postgres',
+        database: process.env.PG_DATABASE || 'midnight_drop',
+        password: process.env.PG_PASSWORD || 'password',
         port: process.env.PG_PORT ? parseInt(process.env.PG_PORT) : 5433,
       }
 );

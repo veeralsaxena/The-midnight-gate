@@ -1,9 +1,11 @@
 const { Queue } = require('bullmq');
-const redis = require('../redis/client');
+const Redis = require('ioredis');
+const redisConfig = process.env.REDIS_URL
+  ? process.env.REDIS_URL
+  : { host: process.env.REDIS_HOST || 'localhost', port: process.env.REDIS_PORT || 6380 };
 
-// Create the Queue backed by Redis
 const orderQueue = new Queue('OrderQueue', {
-    connection: redis,
+    connection: new Redis(redisConfig, { maxRetriesPerRequest: null, family: 6 }),
 });
 
 async function enqueueOrder(productId, userId, token) {

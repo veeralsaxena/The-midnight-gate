@@ -1,0 +1,15 @@
+{
+  "DATABASE_URL": "postgresql://postgres:zDBtPnyiDfBmZSmnwsicoCUPdxtyaSlw@postgres.railway.internal:5432/railway",
+  "GEMINI_API_KEY": "dummy_key_for_build",
+  "RAILWAY_ENVIRONMENT": "production",
+  "RAILWAY_ENVIRONMENT_ID": "92173c98-2536-486f-a54e-ea6892537194",
+  "RAILWAY_ENVIRONMENT_NAME": "production",
+  "RAILWAY_PRIVATE_DOMAIN": "backend.railway.internal",
+  "RAILWAY_PROJECT_ID": "c5743fd6-f1db-484b-a0e7-d4d578e6b22c",
+  "RAILWAY_PROJECT_NAME": "midnight-gate",
+  "RAILWAY_PUBLIC_DOMAIN": "backend-production-4d3d1.up.railway.app",
+  "RAILWAY_SERVICE_BACKEND_URL": "backend-production-4d3d1.up.railway.app",
+  "RAILWAY_SERVICE_ID": "0358343a-4c49-4978-a03c-f1b91b669396",
+  "RAILWAY_SERVICE_NAME": "backend",
+  "RAILWAY_STATIC_URL": "backend-production-4d3d1.up.railway.app"
+}

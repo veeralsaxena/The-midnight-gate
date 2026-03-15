@@ -1,6 +1,10 @@
 const { Worker } = require('bullmq');
-const redis = require('../redis/client');
+const Redis = require('ioredis');
 const pool = require('../database/client');
+
+const redisConfig = process.env.REDIS_URL
+  ? process.env.REDIS_URL
+  : { host: process.env.REDIS_HOST || 'localhost', port: process.env.REDIS_PORT || 6380 };
 
 const completedOrders = [];
 
@@ -38,7 +42,7 @@ const worker = new Worker('OrderQueue', async (job) => {
         throw err; // BullMQ will retry or move to failed
     }
 
-}, { connection: redis });
+}, { connection: new Redis(redisConfig, { maxRetriesPerRequest: null, family: 6 }) });
 
 worker.on('completed', (job) => {
     console.log(`[Worker] Job ${job.id} complete`);

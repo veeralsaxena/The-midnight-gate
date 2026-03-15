@@ -405,15 +405,60 @@ export default function SimulationPage() {
     }, 100);
 
     try {
-      await fetch(`${API}/api/simulate`, {
+      const res = await fetch(`${API}/api/simulate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ totalUsers, inventory, abandonRate: abandonRate / 100 }),
       });
+      if (!res.ok) throw new Error("Backend responded with an error");
     } catch {
-      setSimStatus("IDLE");
-      setCurrentPhase("Backend connection failed");
-      if (elapsedRef.current) clearInterval(elapsedRef.current);
+      // Backend connection failed -> Fallback to Local Simulation Mode
+      setSimStatus("RUNNING");
+      setCurrentPhase("Backend unreachable. Running local fallback simulation...");
+      addLog("FALLBACK", "Backend is offline. Running visual simulation in browser only.", "#A855F7");
+      
+      const mockEvent = (phase: string, data: any, delay: number) => {
+        setTimeout(() => {
+          socketRef.current?.emit("simulationEvent", { phase, ...data });
+          // Manually trigger the handler since we aren't getting real socket events
+          const listeners = (socketRef.current as any)?._callbacks?.["$simulationEvent"] || [];
+          listeners.forEach((fn: any) => fn({ phase, ...data }));
+        }, delay);
+      };
+
+      // Calculate mock stats
+      const cdnPassed = Math.floor(totalUsers * 0.9);
+      const rateLimited = totalUsers - cdnPassed;
+      const waitingReleased = Math.min(cdnPassed, 1000);
+      const waitingRejected = cdnPassed - waitingReleased;
+      const reserved = Math.min(waitingReleased, inventory);
+      const rejected = waitingReleased - reserved;
+      const abandoned = Math.floor(reserved * (abandonRate / 100));
+      const confirmed = reserved - abandoned;
+
+      // Orchestrate mock events
+      mockEvent("START", { totalUsers, inventory, abandonRate: abandonRate / 100 }, 100);
+      mockEvent("WAVE_START", { waveNumber: 1, totalWaves: 1, usersInWave: totalUsers }, 1000);
+      mockEvent("PHASE_CDN", { totalCdnPassed: cdnPassed, passed: cdnPassed }, 2000);
+      mockEvent("PHASE_RATE_LIMIT", { entering: totalUsers, passed: cdnPassed, blocked: rateLimited }, 3000);
+      mockEvent("PHASE_WAITING_ROOM", { totalWaitingEntered: cdnPassed, totalWaitingReleased: waitingReleased, totalWaitingRejected: waitingRejected, rejectedSoldOut: waitingRejected, released: waitingReleased }, 4500);
+      mockEvent("PHASE_REDIS_GATE", { totalReserved: reserved, totalRejected: rejected, reserved, rejected, inventoryRemaining: Math.max(0, inventory - reserved) }, 6000);
+      mockEvent("PHASE_BULLMQ", { totalEnqueued: reserved, enqueued: reserved }, 7500);
+      mockEvent("PHASE_POSTGRES", { totalWritten: confirmed, written: confirmed }, 9000);
+      mockEvent("PHASE_HEARTBEAT_RELEASE", { totalHeartbeatReleased: abandoned, totalAbandoned: abandoned, released: abandoned }, 10500);
+      
+      mockEvent("COMPLETE", {
+        stats: {
+          totalUsers, inventory, cdnPassed, rateLimited,
+          waitingRoomEntered: cdnPassed, waitingRoomReleased: waitingReleased, waitingRoomRejected: waitingRejected,
+          redisReserved: reserved, redisRejected: rejected,
+          bullmqEnqueued: reserved, postgresWritten: confirmed,
+          abandoned, heartbeatReleased: abandoned, ttlReleased: 0, errors: 0,
+          duration: 11000
+        }
+      }, 11500);
+      
+      return; 
     }
   };
 

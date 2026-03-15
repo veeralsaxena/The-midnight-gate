@@ -15,11 +15,14 @@
 const Redis = require('ioredis');
 require('dotenv').config();
 
-const redis = new Redis({
-  host: process.env.REDIS_HOST || 'localhost',
-  port: process.env.REDIS_PORT ? parseInt(process.env.REDIS_PORT) : 6380,
-  maxRetriesPerRequest: null, // Required for BullMQ compatibility
-});
+const redisOptions = { maxRetriesPerRequest: null, family: 6 };
+const redis = process.env.REDIS_URL
+  ? new Redis(process.env.REDIS_URL, redisOptions)
+  : new Redis({
+      host: process.env.REDIS_HOST || 'localhost',
+      port: process.env.REDIS_PORT ? parseInt(process.env.REDIS_PORT) : 6380,
+      ...redisOptions,
+    });
 
 redis.on('error', (err) => {
   console.error('Redis Client Error', err);

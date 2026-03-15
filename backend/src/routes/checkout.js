@@ -78,6 +78,7 @@ router.post('/reserve', anomalyMiddleware, async (req, res) => {
         const metrics = req.app.get('requestMetrics');
         if (metrics) metrics.totalRequests++;
 
+        // Returns: remaining stock (>=0), -3 (sold out), -1 (already reserved), -2 (already confirmed).
         if (result === -2) {
             return res.status(400).json({ error: "Already confirmed. You own this item.", code: "ALREADY_CONFIRMED" });
         }
@@ -86,7 +87,7 @@ router.post('/reserve', anomalyMiddleware, async (req, res) => {
             return res.status(400).json({ error: "You already have a reservation. Complete your payment.", code: "ALREADY_RESERVED" });
         }
 
-        if (result === 0) {
+        if (result === -3) {
             const recommendations = await getRecommendations(productId, 3);
             return res.status(400).json({ 
                 error: "SOLD OUT! Better luck next time. />", 
@@ -120,7 +121,7 @@ router.post('/reserve', anomalyMiddleware, async (req, res) => {
             latency 
         });
 
-        if (result === 0) {
+        if (result <= 0) {
             io.emit('soldOut', { productId });
         }
 

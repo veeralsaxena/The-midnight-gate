@@ -3,30 +3,20 @@ import Link from "next/link";
 
 export default function LandingPage() {
   return (
-    <div className="relative flex min-h-screen w-full flex-col font-body bg-[#0A0A16] text-slate-100 overflow-x-hidden selection:bg-[#00F0FF]/30 selection:text-white">
-      {/* Navigation */}
-      <header className="fixed top-0 z-50 w-full border-b border-[#00F0FF]/10 bg-[#0A0A16]/80 backdrop-blur-md px-6 py-4 lg:px-20">
-        <div className="mx-auto flex max-w-7xl items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex size-10 items-center justify-center rounded-lg bg-[#00F0FF]/10 text-[#00F0FF]">
-              <span className="material-symbols-outlined text-3xl">shield_with_heart</span>
-            </div>
-            <h2 className="font-display text-xl font-bold tracking-tight">The Midnight Gate</h2>
-          </div>
-          <nav className="hidden gap-8 lg:flex">
-            <a className="text-sm font-medium transition-colors hover:text-[#00F0FF]" href="#architecture">Architecture</a>
-            <a className="text-sm font-medium transition-colors hover:text-[#00F0FF]" href="#innovations">Innovations</a>
-            <a className="text-sm font-medium transition-colors hover:text-[#00F0FF]" href="#benchmarks">Benchmarks</a>
-          </nav>
-          <Link href="/drop" className="rounded-full bg-[#00F0FF] px-6 py-2 text-sm font-bold text-[#0A0A16] transition-transform active:scale-95 hover:shadow-[0_0_20px_rgba(0,240,255,0.4)]">
-            Deploy Now
-          </Link>
-        </div>
-      </header>
+    <div 
+      className="relative flex min-h-screen w-full flex-col font-body text-slate-100 overflow-x-hidden selection:bg-[#00F0FF]/30 selection:text-white"
+      style={{ 
+        backgroundImage: "linear-gradient(to bottom, rgba(10, 10, 22, 0.6), rgba(10, 10, 22, 0.9)), url('/background.png')",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundAttachment: "fixed"
+      }}
+    >
 
       {/* Hero Section */}
-      <section className="relative flex min-h-screen items-center justify-center overflow-hidden px-6 pt-20" style={{ background: "radial-gradient(circle at 50% 50%, #1e1b4b 0%, #050b0c 100%)" }}>
-        <div className="absolute inset-0 opacity-20" style={{ backgroundImage: "radial-gradient(circle at 20% 30%, #4c1d95 0%, transparent 40%), radial-gradient(circle at 80% 70%, #064e3b 0%, transparent 40%)" }}></div>
+      <section className="relative flex min-h-screen items-center justify-center overflow-hidden px-6 pt-24">
+        {/* Subtle glow overlay for extra depth */}
+        <div className="absolute inset-0 opacity-30" style={{ backgroundImage: "radial-gradient(circle at 20% 30%, #00F0FF22 0%, transparent 40%), radial-gradient(circle at 80% 70%, #FF00E511 0%, transparent 40%)" }}></div>
         <div className="relative z-10 mx-auto max-w-4xl text-center">
           <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#00F0FF]/20 bg-[#00F0FF]/5 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-[#00F0FF]">
             <span className="relative flex h-2 w-2">
@@ -45,18 +35,18 @@ export default function LandingPage() {
             High-performance resilient infrastructure engineered to withstand 100x traffic spikes. Deep space glassmorphism meets mission-critical reliability.
           </p>
           <div className="mt-12 flex flex-wrap justify-center gap-4">
-            <Link href="/drop" className="flex items-center justify-center h-14 min-w-[200px] rounded-xl bg-[#00F0FF] px-8 text-lg font-bold text-[#0A0A16] shadow-lg shadow-[#00F0FF]/20 hover:shadow-[0_0_30px_rgba(0,240,255,0.5)] transition-all">
-              Launch Infrastructure
+            <Link href="/simulation" className="flex items-center justify-center h-14 min-w-[200px] rounded-xl bg-[#00F0FF] px-8 text-lg font-bold text-[#0A0A16] shadow-lg shadow-[#00F0FF]/20 hover:shadow-[0_0_30px_rgba(0,240,255,0.5)] transition-all active:scale-95">
+              Start Simulation
             </Link>
             <Link href="/admin" className="flex items-center justify-center h-14 min-w-[200px] rounded-xl px-8 text-lg font-bold text-slate-100 bg-[rgba(0,240,255,0.03)] backdrop-blur-[12px] border border-[rgba(0,240,255,0.1)] hover:bg-[#00F0FF]/10 transition-colors">
-              View System Specs
+              War Room Dashboard
             </Link>
           </div>
         </div>
       </section>
 
       {/* Architecture Funnel Section */}
-      <section id="architecture" className="bg-[#0A0A16] py-24 lg:px-20">
+      <section id="architecture" className="py-24 lg:px-20">
         <div className="mx-auto max-w-5xl px-6 text-center">
           <h2 className="font-display text-4xl font-bold tracking-tight text-white">The Resilience Stack</h2>
           <p className="mt-4 text-slate-400">Multi-layered defensive architecture for extreme availability</p>
@@ -125,7 +115,7 @@ export default function LandingPage() {
       </section>
 
       {/* Innovations Bento Grid */}
-      <section id="innovations" className="bg-[#0A0A16] py-24 lg:px-20">
+      <section id="innovations" className="py-24 lg:px-20">
         <div className="mx-auto max-w-7xl px-6">
           <div className="mb-16">
             <h2 className="font-display text-4xl font-bold text-white">System Innovations</h2>
@@ -231,7 +221,7 @@ export default function LandingPage() {
       </footer>
 
       {/* Spacer for footer */}
-      <div className="h-32 bg-[#0A0A16]"></div>
+      <div className="h-32"></div>
     </div>
   );
 }

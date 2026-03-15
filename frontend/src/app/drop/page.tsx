@@ -5,7 +5,7 @@ import { io, Socket } from "socket.io-client";
 import { Loader2, Timer, ShieldCheck, XCircle } from "lucide-react";
 import Link from "next/link";
 
-const API = "http://localhost:4000";
+const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
 export default function DropPage() {
   const socketRef = useRef<Socket | null>(null);
@@ -148,12 +148,11 @@ export default function DropPage() {
       {/* Ambient background glow */}
       <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-screen h-screen pointer-events-none z-0" style={{ background: "radial-gradient(circle at center, rgba(45, 11, 89, 0.4) 0%, rgba(10, 10, 22, 1) 70%)" }}></div>
       
-      {/* Top Navigation Area */}
-      <header className="w-full flex items-center justify-between px-6 py-4 lg:px-12 border-b border-[rgba(255,255,255,0.1)] bg-[rgba(255,255,255,0.03)] backdrop-blur-[16px] z-10 sticky top-0">
-        <Link href="/" className="flex items-center gap-3 group">
-          <span className="material-symbols-outlined text-[#00F0FF] text-3xl group-hover:drop-shadow-[0_0_8px_rgba(0,240,255,0.8)] transition-all">token</span>
-          <h1 className="text-[#F8F9FA] font-display font-bold text-xl tracking-tight">The Midnight Gate</h1>
-        </Link>
+      {/* Compact Status Bar */}
+      <div className="w-full flex items-center justify-between px-6 py-3 lg:px-12 border-b border-[rgba(255,255,255,0.06)] bg-[rgba(255,255,255,0.02)] z-10 mt-16">
+        <h2 className="font-display font-bold text-lg tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-[#00F0FF] to-[#F8F9FA]">
+          Live Drop Simulator
+        </h2>
         
         {/* Heartbeat Indicator */}
         <div className="flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-full border border-[#00F0FF]/20 shadow-[0_0_10px_rgba(0,240,255,0.1)]">
@@ -169,7 +168,7 @@ export default function DropPage() {
             </>
           )}
         </div>
-      </header>
+      </div>
 
       {/* Main Content Split Screen */}
       <main className="flex-1 w-full max-w-[1600px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8 p-6 lg:p-12 z-0 relative">

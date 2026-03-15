@@ -5,6 +5,7 @@ const Redis = require('ioredis');
 const { Server } = require('socket.io');
 const checkoutRoutes = require('./routes/checkout');
 const agentRoutes = require('./routes/agent');
+const simulationRoutes = require('./routes/simulation');
 const { setInventory, getInventory, releaseReservation, getMetrics } = require('./redis/scripts');
 const { orderQueue } = require('./queue/orderQueue');
 require('./queue/worker');
@@ -65,6 +66,7 @@ io.on('connection', (socket) => {
 // Routes
 app.use('/api', checkoutRoutes);
 app.use('/api/admin', agentRoutes);
+app.use('/api', simulationRoutes);
 
 app.post('/api/admin/reset', async (req, res) => {
     const inv = req.body.inventory || 10;

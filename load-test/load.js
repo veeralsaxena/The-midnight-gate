@@ -90,6 +90,7 @@ async function runLoadTest() {
     
     const startTime = Date.now();
 
+    const promises = [];
     // Fire regular users
     for (let i = 0; i < NUM_USERS; i++) {
         promises.push(simulateUser(i, false));

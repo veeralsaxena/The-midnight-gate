@@ -131,3 +131,36 @@
     linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
   background-size: 40px 40px;
 }
+
+/* ============ NAVBAR ANIMATIONS ============ */
+
+@keyframes nav-slide-down {
+  from { transform: translateY(-100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes nav-glow-pulse {
+  0%, 100% { box-shadow: 0 0 6px rgba(0,240,255,0.4); opacity: 0.8; }
+  50% { box-shadow: 0 0 14px rgba(0,240,255,0.7); opacity: 1; }
+}
+
+@utility animate-nav-slide-down {
+  animation: nav-slide-down 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@utility animate-nav-glow {
+  animation: nav-glow-pulse 2s ease-in-out infinite;
+}
+
+/* Custom scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(0,240,255,0.2);
+  border-radius: 10px;
+}
+

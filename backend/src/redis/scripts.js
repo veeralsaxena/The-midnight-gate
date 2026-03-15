@@ -37,7 +37,7 @@ const ATOMIC_RESERVE_SCRIPT = `
     redis.call("SETEX", reservation_key, ttl, user_id)
     return stock - 1
   else
-    return 0
+    return -3
   end
 `;
 

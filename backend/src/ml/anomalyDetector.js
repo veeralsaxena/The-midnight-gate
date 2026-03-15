@@ -66,9 +66,9 @@ class EdgeAnomalyDetector {
         let score = 0.0;
         
         // High velocity penalty (Flash sale humans might click fast, but >10/sec is a bot)
-        if (velocity > 3) score += 0.3;
-        if (velocity > 8) score += 0.5;
-        if (velocity > 15) score += 0.8;
+        if (velocity > 2) score += 0.3;
+        if (velocity > 5) score += 0.5;
+        if (velocity > 10) score += 0.8;
 
         // Robotic pattern penalty
         if (isProgrammatic) score += 0.4;

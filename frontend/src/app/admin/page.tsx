@@ -13,10 +13,13 @@ import {
   TerminalSquare, 
   AlertTriangle, 
   Server, 
-  Activity 
+  Activity,
+  History,
+  Rocket,
+  Clock
 } from "lucide-react";
 
-const API = "http://localhost:4000";
+const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
 interface ActivityEvent {
   id: number;
@@ -24,6 +27,20 @@ interface ActivityEvent {
   userId?: string;
   timestamp: number;
   latency?: number;
+}
+
+interface SimulationRun {
+  id: number;
+  total_users: number;
+  inventory: number;
+  abandon_rate: string;
+  reserved: number;
+  confirmed: number;
+  rejected: number;
+  abandoned: number;
+  heartbeat_released: number;
+  duration_ms: number;
+  created_at: string;
 }
 
 export default function WarRoom() {
@@ -38,11 +55,39 @@ export default function WarRoom() {
   const [systemStatus, setSystemStatus] = useState("SECURE");
   const [activityLog, setActivityLog] = useState<ActivityEvent[]>([]);
   const [initialInventory, setInitialInventory] = useState(10);
+  
+  // Simulation tracking
+  const [simRunning, setSimRunning] = useState(false);
+  const [simStats, setSimStats] = useState<{reserved: number, confirmed: number, rejected: number, abandoned: number} | null>(null);
+  
+  // Previous launches
+  const [previousRuns, setPreviousRuns] = useState<SimulationRun[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
+  
+  // Agentic AI Chat State
+  const [prompt, setPrompt] = useState("");
+  const [chatLog, setChatLog] = useState<{role: string, text: string}[]>([]);
+  const [isAgentTyping, setIsAgentTyping] = useState(false);
+  
   const eventIdRef = useRef(0);
+  const chatEndRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [chatLog, isAgentTyping]);
 
   const addActivity = (event: Omit<ActivityEvent, "id">) => {
     eventIdRef.current++;
-    setActivityLog(prev => [{ ...event, id: eventIdRef.current }, ...prev].slice(0, 50));
+    setActivityLog(prev => [{ ...event, id: eventIdRef.current }, ...prev].slice(0, 80));
+  };
+
+  // Fetch previous launches
+  const fetchHistory = async () => {
+    try {
+      const res = await fetch(`${API}/api/simulate/history`);
+      const data = await res.json();
+      setPreviousRuns(data.runs || []);
+    } catch {}
   };
 
   // Socket + Polling
@@ -62,12 +107,10 @@ export default function WarRoom() {
 
     socket.on("activityEvent", (event) => {
       addActivity(event);
-
       if (event.type === "RESERVED") setSystemStatus("HERD DETECTED");
       if (event.type === "HEARTBEAT_RELEASE") setSystemStatus("HEARTBEAT RECLAIM");
       if (event.type === "TTL_RELEASE") setSystemStatus("TTL RECLAIM");
       if (event.type === "SYSTEM_RESET") setSystemStatus("RESET");
-
       setTimeout(() => setSystemStatus("SECURE"), 1500);
     });
 
@@ -77,11 +120,51 @@ export default function WarRoom() {
       else setTimeout(() => setSystemStatus("SECURE"), 1000);
     });
 
-    socket.on("soldOut", () => {
-      setSystemStatus("INVENTORY DEPLETED");
+    socket.on("soldOut", () => { setSystemStatus("INVENTORY DEPLETED"); });
+
+    // Listen for simulation events (from the simulator page)
+    socket.on("simulationEvent", (event) => {
+      switch (event.phase) {
+        case "START":
+          setSimRunning(true);
+          setSystemStatus("HERD SIMULATION");
+          setSimStats(null);
+          addActivity({ type: "SIM_START", timestamp: Date.now() });
+          break;
+        case "PHASE_REDIS_GATE":
+          addActivity({ type: "SIM_RESERVE", timestamp: Date.now(), latency: event.reserved });
+          break;
+        case "PHASE_POSTGRES":
+          addActivity({ type: "SIM_CONFIRM", timestamp: Date.now(), latency: event.written });
+          break;
+        case "PHASE_HEARTBEAT_RELEASE":
+          addActivity({ type: "SIM_HEARTBEAT", timestamp: Date.now(), latency: event.released });
+          break;
+        case "COMPLETE":
+          setSimRunning(false);
+          setSystemStatus("SIMULATION COMPLETE");
+          if (event.stats) {
+            setSimStats({
+              reserved: event.stats.redisReserved,
+              confirmed: event.stats.postgresWritten,
+              rejected: event.stats.redisRejected,
+              abandoned: event.stats.abandoned,
+            });
+          }
+          addActivity({ type: "SIM_COMPLETE", timestamp: Date.now() });
+          // Refresh history after a short delay (to let DB write complete)
+          setTimeout(() => fetchHistory(), 1000);
+          setTimeout(() => setSystemStatus("SECURE"), 3000);
+          break;
+        case "ERROR":
+          setSimRunning(false);
+          setSystemStatus("SIMULATION ERROR");
+          addActivity({ type: "SIM_ERROR", timestamp: Date.now() });
+          break;
+      }
     });
 
-    // Poll metrics every second for RPS and queue depth
+    // Poll metrics
     const poll = setInterval(async () => {
       try {
         const res = await fetch(`${API}/api/admin/metrics`);
@@ -95,10 +178,13 @@ export default function WarRoom() {
       } catch {}
     }, 1000);
 
+    // Fetch history on mount
+    fetchHistory();
+
     return () => { socket.disconnect(); clearInterval(poll); };
   }, []);
 
-  // INITIAL FETCH
+  // Initial fetch
   useEffect(() => {
     fetch(`${API}/api/inventory/1`).then(r => r.json()).then(d => {
       setStock(d.stock); setReservedCount(d.reservedCount || 0); setConfirmedCount(d.confirmedCount || 0);
@@ -112,8 +198,30 @@ export default function WarRoom() {
     });
   };
 
+  const handleChatSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!prompt.trim() || isAgentTyping) return;
+    
+    setChatLog(prev => [...prev, { role: "user", text: prompt }]);
+    const currentPrompt = prompt;
+    setPrompt("");
+    setIsAgentTyping(true);
+
+    try {
+      const res = await fetch(`${API}/api/admin/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: currentPrompt })
+      });
+      const data = await res.json();
+      setChatLog(prev => [...prev, { role: "agent", text: data.reply || data.error }]);
+    } catch (err) {
+      setChatLog(prev => [...prev, { role: "agent", text: "Agent communication failed." }]);
+    }
+    setIsAgentTyping(false);
+  };
+
   const isQueueCritical = queueLength > 20;
-  // Calculate system capacity logic for the gauge (if queue gets full)
   const capacityPct = Math.min(100, Math.round(((queueLength + activeUsers) / 5000) * 100) || 5);
 
   const eventLabel: Record<string, { text: string; color: string }> = {
@@ -124,31 +232,49 @@ export default function WarRoom() {
     LOAD_SHEDDING_ON: { text: "LOAD SHEDDING", color: "text-[#FF00E5] font-bold animate-pulse" },
     LOAD_SHEDDING_OFF: { text: "LIMITER OFF", color: "text-[#22C55E]" },
     SYSTEM_RESET: { text: "SYSTEM RESET", color: "text-[#A855F7]" },
+    SIM_START: { text: "🚀 SIMULATION STARTED", color: "text-[#00F0FF] font-bold" },
+    SIM_RESERVE: { text: "⚡ SIM RESERVE", color: "text-[#3B82F6]" },
+    SIM_CONFIRM: { text: "✅ SIM CONFIRM", color: "text-[#22C55E]" },
+    SIM_HEARTBEAT: { text: "💔 SIM RELEASE", color: "text-[#EAB308]" },
+    SIM_COMPLETE: { text: "🏁 SIMULATION DONE", color: "text-[#22C55E] font-bold" },
+    SIM_ERROR: { text: "❌ SIM ERROR", color: "text-[#EF4444] font-bold" },
   };
 
   return (
     <div className="bg-[#0A0A16] text-[#F8F9FA] font-body min-h-screen overflow-x-hidden relative selection:bg-[#00F0FF]/30 selection:text-white">
-      {/* Background Gradient */}
       <div className="fixed inset-0 pointer-events-none bg-[radial-gradient(circle_at_50%_0%,rgba(45,11,89,0.5)_0%,rgba(10,10,22,1)_70%)] z-0"></div>
       
-      {/* Alert Border Overlay (Simulated Under Load State) */}
       {loadShedding && (
         <div className="fixed inset-0 pointer-events-none border-[3px] border-[#FF00E5] animate-[pulseAlert_2s_infinite] opacity-50 z-50"></div>
       )}
 
-      <div className="relative z-10 flex flex-col h-full min-h-screen">
-        {/* Header */}
-        <header className="flex flex-col md:flex-row items-start md:items-center justify-between border-b border-[rgba(255,255,255,0.1)] px-8 py-4 backdrop-blur-[16px] bg-[#0A0A16]/50 sticky top-0 z-40 gap-4">
-          <Link href="/" className="flex items-center gap-4 group">
-            <div className="size-8 text-[#00F0FF] flex items-center justify-center group-hover:scale-110 transition-transform">
-              <span className="material-symbols-outlined text-[32px]">security</span>
-            </div>
-            <h1 className="font-display text-2xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-[#00F0FF] to-[#F8F9FA]">
-              Midnight Gate War Room
-            </h1>
-          </Link>
-          
-          <div className="flex items-center gap-6">
+      <div className="relative z-10 flex flex-col h-full min-h-screen pt-16">
+        {/* Status Bar */}
+        <div className="flex items-center justify-between px-8 py-3 border-b border-[rgba(255,255,255,0.06)]">
+          <div className="flex items-center gap-4">
+            <h2 className="font-display text-xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-[#00F0FF] to-[#F8F9FA]">
+              War Room
+            </h2>
+            {simRunning && (
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#00F0FF]/10 border border-[#00F0FF]/30">
+                <span className="relative flex h-1.5 w-1.5"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#00F0FF] opacity-75" /><span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#00F0FF]" /></span>
+                <span className="font-mono text-[10px] text-[#00F0FF] uppercase tracking-wider">Simulation Live</span>
+              </div>
+            )}
+          </div>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => { setShowHistory(!showHistory); if (!showHistory) fetchHistory(); }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.1)] text-[#8F9BB3] hover:text-white hover:bg-[rgba(255,255,255,0.1)] transition-all font-mono text-[11px]"
+            >
+              <History size={14} /> Previous Launches
+            </button>
+            <Link
+              href="/simulation"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#00F0FF]/10 border border-[#00F0FF]/30 text-[#00F0FF] hover:bg-[#00F0FF]/20 transition-all font-mono text-[11px] font-bold"
+            >
+              <Rocket size={14} /> Open Simulator
+            </Link>
             {loadShedding ? (
               <div className="flex items-center gap-2">
                 <span className="relative flex h-3 w-3">
@@ -160,15 +286,78 @@ export default function WarRoom() {
             ) : (
               <div className="flex items-center gap-2">
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-[#22C55E]"></span>
-                <span className="font-mono text-[13px] text-gray-500 tracking-wide uppercase">System Secure</span>
+                <span className="font-mono text-[13px] text-gray-500 tracking-wide uppercase">{systemStatus}</span>
               </div>
             )}
-            
-            <nav className="hidden md:flex gap-6 font-display text-sm font-medium text-[#8F9BB3]">
-              <Link href="/drop" className="hover:text-[#00F0FF] transition-colors rounded py-1 px-3 border border-transparent hover:border-[#00F0FF]/30">Live Drop Simulator</Link>
-            </nav>
           </div>
-        </header>
+        </div>
+
+        {/* Previous Launches Panel */}
+        {showHistory && (
+          <div className="px-8 py-4 border-b border-[rgba(255,255,255,0.06)] bg-[rgba(255,255,255,0.02)] animate-slide-up">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-display text-sm font-bold text-white flex items-center gap-2">
+                <History size={16} className="text-[#A855F7]" /> Previous Simulation Launches
+              </h3>
+              <button onClick={() => setShowHistory(false)} className="text-[#8F9BB3] hover:text-white text-sm">✕</button>
+            </div>
+            {previousRuns.length === 0 ? (
+              <p className="text-[#8F9BB3] font-mono text-xs">No previous runs yet. Launch a simulation from the Simulator page.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full font-mono text-[11px]">
+                  <thead>
+                    <tr className="text-[#8F9BB3] border-b border-[rgba(255,255,255,0.06)]">
+                      <th className="text-left py-2 pr-4">#</th>
+                      <th className="text-left py-2 pr-4">Users</th>
+                      <th className="text-left py-2 pr-4">Inventory</th>
+                      <th className="text-left py-2 pr-4">Abandon</th>
+                      <th className="text-left py-2 pr-4 text-[#3B82F6]">Reserved</th>
+                      <th className="text-left py-2 pr-4 text-[#22C55E]">Confirmed</th>
+                      <th className="text-left py-2 pr-4 text-[#FF00E5]">Rejected</th>
+                      <th className="text-left py-2 pr-4 text-[#EAB308]">Released</th>
+                      <th className="text-left py-2 pr-4">Duration</th>
+                      <th className="text-left py-2">Timestamp</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {previousRuns.map((run) => (
+                      <tr key={run.id} className="border-b border-[rgba(255,255,255,0.03)] hover:bg-[rgba(255,255,255,0.02)]">
+                        <td className="py-2 pr-4 text-[#8F9BB3]">{run.id}</td>
+                        <td className="py-2 pr-4 text-white font-bold">{run.total_users.toLocaleString()}</td>
+                        <td className="py-2 pr-4 text-white">{run.inventory}</td>
+                        <td className="py-2 pr-4 text-[#FF00E5]">{Math.round(parseFloat(run.abandon_rate) * 100)}%</td>
+                        <td className="py-2 pr-4 text-[#3B82F6] font-bold">{run.reserved}</td>
+                        <td className="py-2 pr-4 text-[#22C55E] font-bold">{run.confirmed}</td>
+                        <td className="py-2 pr-4 text-[#FF00E5]">{run.rejected.toLocaleString()}</td>
+                        <td className="py-2 pr-4 text-[#EAB308]">{run.heartbeat_released}</td>
+                        <td className="py-2 pr-4 text-[#8F9BB3]">{run.duration_ms}ms</td>
+                        <td className="py-2 text-[#8F9BB3]">{new Date(run.created_at).toLocaleString()}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Simulation Stats Banner (when simulation completes) */}
+        {simStats && (
+          <div className="mx-8 mt-4 p-4 rounded-xl bg-[#22C55E]/5 border border-[#22C55E]/20 flex items-center gap-6 animate-slide-up">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 size={20} className="text-[#22C55E]" />
+              <span className="font-display text-sm font-bold text-[#22C55E]">Last Simulation</span>
+            </div>
+            <div className="flex gap-4 ml-auto">
+              <span className="font-mono text-xs"><span className="text-[#3B82F6] font-bold">{simStats.reserved}</span> reserved</span>
+              <span className="font-mono text-xs"><span className="text-[#22C55E] font-bold">{simStats.confirmed}</span> confirmed</span>
+              <span className="font-mono text-xs"><span className="text-[#FF00E5] font-bold">{simStats.rejected.toLocaleString()}</span> rejected</span>
+              <span className="font-mono text-xs"><span className="text-[#EAB308] font-bold">{simStats.abandoned}</span> abandoned</span>
+            </div>
+            <button onClick={() => setSimStats(null)} className="text-[#8F9BB3] hover:text-white text-xs ml-4">✕</button>
+          </div>
+        )}
 
         {/* Main Content Grid */}
         <main className="flex-1 p-6 lg:p-8 flex flex-col gap-6 max-w-[1600px] mx-auto w-full">
@@ -176,7 +365,7 @@ export default function WarRoom() {
           {/* Top Metrics Row */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             
-            {/* Metric 1 */}
+            {/* Metric 1: Active Connections */}
             <div className="bg-[rgba(255,255,255,0.03)] backdrop-blur-[16px] border border-[rgba(255,255,255,0.1)] rounded-xl shadow-[0_4px_30px_rgba(0,0,0,0.5)] p-6 flex flex-col gap-2 relative overflow-hidden group">
               <div className="absolute inset-0 bg-[#00F0FF]/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
               <p className="text-[#8F9BB3] text-sm font-medium flex items-center gap-2">
@@ -188,20 +377,25 @@ export default function WarRoom() {
               <div className="h-1 w-full bg-[rgba(255,255,255,0.1)] mt-2 rounded-full overflow-hidden">
                 <div className="h-full bg-[#00F0FF] rounded-full shadow-[0_0_20px_rgba(0,240,255,0.4)] transition-all duration-500" style={{ width: `${Math.min(100, (activeUsers / 5000) * 100)}%` }}></div>
               </div>
+              <p className="font-mono text-[10px] text-[#8F9BB3]">Live WebSocket connections to the server</p>
             </div>
 
-            {/* Metric 2 */}
+            {/* Metric 2: Inventory */}
             <div className="bg-[rgba(255,255,255,0.03)] backdrop-blur-[16px] border border-[rgba(255,255,255,0.1)] rounded-xl shadow-[0_4px_30px_rgba(0,0,0,0.5)] p-6 flex flex-col gap-2">
               <p className="text-[#8F9BB3] text-sm font-medium flex items-center gap-2">
-                <Box size={16} /> Available Inventory
+                <Box size={16} /> Available Inventory (Redis)
               </p>
               <p className="font-mono text-[32px] font-bold text-[#00F0FF] drop-shadow-[0_0_10px_rgba(0,240,255,0.5)]">
                 {stock !== null ? stock : "—"}
               </p>
-              <p className="font-mono text-[12px] text-[#A855F7]">Atomic Lua Gate Active</p>
+              <div className="flex gap-3 font-mono text-[11px]">
+                <span className="text-[#3B82F6]">Reserved: {reservedCount}</span>
+                <span className="text-[#22C55E]">Confirmed: {confirmedCount}</span>
+              </div>
+              <p className="font-mono text-[10px] text-[#8F9BB3]">Live stock count from Redis atomic gate</p>
             </div>
 
-            {/* Metric 3 (Alert State) */}
+            {/* Metric 3: Queue Depth */}
             <div className={`bg-[rgba(255,255,255,0.03)] backdrop-blur-[16px] border rounded-xl shadow-[0_4px_30px_rgba(0,0,0,0.5)] p-6 flex flex-col gap-2 relative overflow-hidden ${isQueueCritical ? 'border-[#FF00E5]/50 shadow-[0_0_30px_rgba(255,0,229,0.3)]' : 'border-[rgba(255,255,255,0.1)]'}`}>
               {isQueueCritical && <div className="absolute inset-0 bg-[#FF00E5]/10 animate-pulse"></div>}
               <p className="text-[#8F9BB3] text-sm font-medium flex items-center gap-2 relative z-10">
@@ -210,37 +404,38 @@ export default function WarRoom() {
               <p className={`font-mono text-[32px] font-bold relative z-10 ${isQueueCritical ? 'text-[#FF00E5] drop-shadow-[0_0_10px_rgba(255,0,229,0.5)]' : 'text-white'}`}>
                 {queueLength}
               </p>
-              <p className={`font-mono text-[12px] relative z-10 ${isQueueCritical ? 'text-[#FF00E5]' : 'text-[#8F9BB3]'}`}>
-                {isQueueCritical ? "> 20 Threshold Exceeded" : "Healthy. Under 20 threshold."}
+              <p className={`font-mono text-[10px] relative z-10 ${isQueueCritical ? 'text-[#FF00E5]' : 'text-[#8F9BB3]'}`}>
+                {isQueueCritical ? "> 20 — Load shedding may activate" : "Healthy. Jobs waiting for PostgreSQL write."}
               </p>
             </div>
 
-            {/* Metric 4 */}
+            {/* Metric 4: RPS */}
             <div className="bg-[rgba(255,255,255,0.03)] backdrop-blur-[16px] border border-[rgba(255,255,255,0.1)] rounded-xl shadow-[0_4px_30px_rgba(0,0,0,0.5)] p-6 flex flex-col gap-2">
               <p className="text-[#8F9BB3] text-sm font-medium flex items-center gap-2">
-                <CheckCircle2 size={16} /> Total Processed
+                <Activity size={16} /> Throughput
               </p>
               <p className="font-mono text-[32px] font-bold text-[#00F0FF] drop-shadow-[0_0_10px_rgba(0,240,255,0.5)]">
-                {confirmedCount + reservedCount}
+                {rps} <span className="text-base text-[#8F9BB3]">RPS</span>
               </p>
-              <p className="font-mono text-[12px] text-[#8F9BB3]">{rps} Requests per Second (RPS)</p>
+              <p className="font-mono text-[10px] text-[#8F9BB3]">Requests/second hitting the backend API</p>
             </div>
           </div>
 
           {/* Lower Split Section */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 min-h-[500px]">
             
-            {/* Terminal Logs (Left 2/3) */}
+            {/* Terminal Logs */}
             <div className="lg:col-span-2 bg-[rgba(255,255,255,0.03)] backdrop-blur-[16px] border border-[rgba(255,255,255,0.1)] rounded-xl shadow-[0_4px_30px_rgba(0,0,0,0.5)] flex flex-col overflow-hidden">
               <div className="bg-black/40 border-b border-[rgba(255,255,255,0.1)] px-4 py-2 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <TerminalSquare size={16} className="text-[#8F9BB3]" />
                   <span className="font-mono text-[12px] text-[#8F9BB3] tracking-wider">gate-worker-node-01.log</span>
+                  {simRunning && <span className="font-mono text-[10px] text-[#00F0FF] bg-[#00F0FF]/10 px-2 py-0.5 rounded-full">SIM ACTIVE</span>}
                 </div>
                 <div className="flex gap-1.5">
                   <div className="size-2.5 rounded-full bg-[rgba(255,255,255,0.1)]"></div>
                   <div className="size-2.5 rounded-full bg-[rgba(255,255,255,0.1)]"></div>
-                  <div className="size-2.5 rounded-full bg-[#FF00E5]"></div>
+                  <div className={`size-2.5 rounded-full ${simRunning ? 'bg-[#00F0FF] animate-pulse' : 'bg-[#FF00E5]'}`}></div>
                 </div>
               </div>
               
@@ -250,7 +445,9 @@ export default function WarRoom() {
                 
                 <div className="flex flex-col gap-1 overflow-y-auto custom-scrollbar h-full justify-end pr-2 pb-2">
                   {activityLog.length === 0 && (
-                    <div className="text-[#8F9BB3] text-center my-auto">Awaiting traffic spikes...</div>
+                    <div className="text-[#8F9BB3] text-center my-auto">
+                      Awaiting traffic spikes... Open the <Link href="/simulation" className="text-[#00F0FF] hover:underline">Simulator</Link> to begin.
+                    </div>
                   )}
                   {activityLog.slice().reverse().map((event) => {
                     const label = eventLabel[event.type] || { text: event.type, color: "text-[#8F9BB3]" };
@@ -270,7 +467,7 @@ export default function WarRoom() {
                         <span className={`shrink-0 ${label.color}`}>{label.text}</span>
                         <span className="text-[#8F9BB3] truncate">
                           {event.userId && `(user: ${event.userId}) `}
-                          {event.latency && `locked in ${event.latency}ms`}
+                          {event.latency !== undefined && (event.type.startsWith("SIM_") ? `count: ${event.latency}` : `locked in ${event.latency}ms`)}
                         </span>
                       </div>
                     );
@@ -328,11 +525,11 @@ export default function WarRoom() {
                 )}
               </div>
 
-              {/* Controls and DB Info Card */}
+              {/* Controls Card */}
               <div className="bg-[rgba(255,255,255,0.03)] backdrop-blur-[16px] border border-[rgba(255,255,255,0.1)] rounded-xl shadow-[0_4px_30px_rgba(0,0,0,0.5)] p-5 h-auto">
                 <div className="flex justify-between items-center mb-4">
                   <h4 className="font-display text-sm font-bold text-[#F8F9FA] flex items-center gap-2"><Server size={14}/> Node Controls</h4>
-                  <span className="font-mono text-[12px] text-[#22C55E]">Healthy</span>
+                  <span className="font-mono text-[12px] text-[#22C55E]">Docker ✓</span>
                 </div>
                 
                 <div className="space-y-4">
@@ -347,7 +544,7 @@ export default function WarRoom() {
                     <button 
                       onClick={handleReset}
                       className="shrink-0 bg-[#00F0FF]/10 hover:bg-[#00F0FF]/20 text-[#00F0FF] border border-[#00F0FF]/30 p-1.5 rounded transition-colors"
-                      title="Reset Database"
+                      title="Reset Inventory in Redis"
                     >
                       <RotateCcw size={16} />
                     </button>
@@ -355,15 +552,65 @@ export default function WarRoom() {
 
                   <div className="space-y-2 pt-2 border-t border-[rgba(255,255,255,0.05)]">
                     <div className="flex items-center justify-between">
-                      <span className="font-mono text-[10px] text-[#8F9BB3]">PostgreSQL-Core</span>
-                      <span className="font-mono text-[10px] text-[#F8F9FA]">{(latencyDelay("pg"))}ms</span>
+                      <span className="font-mono text-[10px] text-[#8F9BB3]">PostgreSQL (port 5433)</span>
+                      <span className="font-mono text-[10px] text-[#22C55E]">● Connected</span>
                     </div>
                     <div className="flex items-center justify-between mt-1">
-                      <span className="font-mono text-[10px] text-[#8F9BB3]">Redis-In-Memory-Gate</span>
-                      <span className="font-mono text-[10px] text-[#00F0FF]">{(latencyDelay("redis"))}ms</span>
+                      <span className="font-mono text-[10px] text-[#8F9BB3]">Redis (port 6380)</span>
+                      <span className="font-mono text-[10px] text-[#22C55E]">● Connected</span>
+                    </div>
+                    <div className="flex items-center justify-between mt-1">
+                      <span className="font-mono text-[10px] text-[#8F9BB3]">BullMQ Workers</span>
+                      <span className="font-mono text-[10px] text-[#22C55E]">● Active</span>
                     </div>
                   </div>
                 </div>
+              </div>
+
+              {/* Agent Chat */}
+              <div className="bg-[rgba(255,255,255,0.03)] backdrop-blur-[16px] border border-[#00F0FF]/30 rounded-xl shadow-[0_4px_30px_rgba(0,0,0,0.5)] flex flex-col flex-1 min-h-[300px] overflow-hidden group">
+                <div className="bg-black/40 border-b border-[rgba(255,255,255,0.1)] px-4 py-2 flex items-center gap-2 relative">
+                  <div className="absolute inset-0 bg-[#00F0FF]/10 animate-pulse pointer-events-none opacity-20"></div>
+                  <span className="material-symbols-outlined text-[#00F0FF] text-[16px]">smart_toy</span>
+                  <span className="font-mono text-[12px] text-[#00F0FF] tracking-wider font-bold">Midnight Commander (Agent AI)</span>
+                </div>
+                
+                <div className="flex-1 bg-[#05050A] p-4 font-mono text-[11px] overflow-y-auto custom-scrollbar flex flex-col gap-3">
+                  <div className="text-[#8F9BB3] mb-2 italic">&gt; Neural Link Established. Try: &quot;Reset inventory to 100&quot; or &quot;What is the queue depth?&quot;</div>
+                  {chatLog.map((chat, idx) => (
+                    <div key={idx} className={`flex flex-col ${chat.role === "user" ? "items-end" : "items-start"}`}>
+                      <div className={`p-2 rounded-lg max-w-[90%] whitespace-pre-wrap ${chat.role === "user" ? "bg-[rgba(255,255,255,0.1)] text-[#F8F9FA]" : "bg-[#00F0FF]/10 text-[#00F0FF] border border-[#00F0FF]/30"}`}>
+                        {chat.text}
+                      </div>
+                    </div>
+                  ))}
+                  {isAgentTyping && (
+                    <div className="flex items-start">
+                      <div className="p-2 rounded-lg bg-[#00F0FF]/5 text-[#00F0FF] border border-[#00F0FF]/10 animate-pulse">
+                        Analyzing system matrix...
+                      </div>
+                    </div>
+                  )}
+                  <div ref={chatEndRef}></div>
+                </div>
+                
+                <form onSubmit={handleChatSubmit} className="p-2 border-t border-[rgba(255,255,255,0.1)] bg-black/60 flex gap-2">
+                  <input 
+                    type="text" 
+                    value={prompt}
+                    onChange={e => setPrompt(e.target.value)}
+                    placeholder="Command the AI agent..."
+                    className="flex-1 bg-transparent text-white font-mono text-[12px] px-2 py-1 outline-none focus:bg-[rgba(255,255,255,0.05)] rounded transition-all"
+                    disabled={isAgentTyping}
+                  />
+                  <button 
+                    type="submit" 
+                    disabled={isAgentTyping || !prompt.trim()}
+                    className="bg-[#00F0FF]/20 text-[#00F0FF] hover:bg-[#00F0FF]/30 px-3 rounded font-mono text-[12px] font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    EXEC
+                  </button>
+                </form>
               </div>
 
             </div>
@@ -372,10 +619,4 @@ export default function WarRoom() {
       </div>
     </div>
   );
-}
-
-// Just for visual effect to mimic constant DB latency flux
-function latencyDelay(db: string) {
-  if (db === "pg") return Math.floor(Math.random() * 5) + 12;
-  return Math.floor(Math.random() * 2) + 1; // redis is extremely fast 1-3ms
 }

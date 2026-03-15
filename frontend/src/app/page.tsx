@@ -172,13 +172,6 @@ export default function PitchDeck() {
               <div className="absolute inset-0 z-0 pointer-events-none" style={{
                 background: "radial-gradient(ellipse 50% 60% at 50% 55%, rgba(59,130,246,0.08) 0%, rgba(139,92,246,0.04) 40%, transparent 70%)"
               }} />
-              <div className="absolute inset-0 grayscale contrast-[1.15] brightness-[1.05]">
-                {/* Fallback to simple UI since Spline can be heavy, but we have it installed */}
-                <SplineScene
-                  scene="https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode"
-                  className="w-full h-full opacity-50 hue-rotate-[200deg]"
-                />
-              </div>
             </motion.div>
           </div>
         </div>

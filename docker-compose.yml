@@ -1,0 +1,49 @@
+# ============================================================
+# The Midnight Gate — Docker Infrastructure
+# ============================================================
+# This runs the two core data services:
+#   - Redis: In-memory atomic inventory gatekeeper
+#   - PostgreSQL: Persistent order storage
+#
+# Usage:
+#   docker compose up -d      # Start all services
+#   docker compose down       # Stop all services
+#   docker compose logs -f    # View logs
+#
+# Ports are remapped to avoid conflicts with local services:
+#   Redis:    6380 (container: 6379)
+#   Postgres: 5433 (container: 5432)
+# ============================================================
+
+version: '3.8'
+services:
+  # Redis — The Atomic Inventory Gate
+  # Stores: inventory counts, reservation keys (with TTL), user sets
+  # Must be running before the backend starts
+  redis:
+    image: redis:alpine
+    ports:
+      - "6380:6379"   # Host:Container — avoids conflict with local Redis
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+
+  # PostgreSQL — Persistent Order Storage
+  # Only receives confirmed orders (after Redis + BullMQ processing)
+  # Never faces the thundering herd directly
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: midnight_drop
+    ports:
+      - "5433:5432"   # Host:Container — avoids conflict with local Postgres
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./backend/src/database/schema.sql:/docker-entrypoint-initdb.d/init.sql
+    restart: unless-stopped
+
+volumes:
+  redis-data:
+  postgres-data:

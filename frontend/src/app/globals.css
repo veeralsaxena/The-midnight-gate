@@ -1,0 +1,110 @@
+@import "tailwindcss";
+
+@theme {
+  --color-acm-blue: #3B82F6;
+  --color-acm-cyan: #06B6D4;
+  --color-acm-green: #22C55E;
+  --color-acm-red: #EF4444;
+  --color-acm-yellow: #EAB308;
+  --color-acm-purple: #A855F7;
+  --color-acm-black: #0A0A0A;
+  --color-acm-pure: #000000;
+  --color-acm-card: #0D0D0D;
+  --color-acm-border: rgba(255, 255, 255, 0.06);
+  
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-acm-pure);
+    color: white;
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* ============ UTILITY CLASSES ============ */
+
+@utility glass-card {
+  background: rgba(13, 13, 13, 0.8);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+}
+
+@utility metric-card {
+  background: linear-gradient(135deg, rgba(13, 13, 13, 0.9), rgba(20, 20, 20, 0.6));
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 16px;
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+@utility glow-blue {
+  box-shadow: 0 0 40px rgba(59, 130, 246, 0.15), 0 0 80px rgba(59, 130, 246, 0.05);
+}
+
+@utility glow-green {
+  box-shadow: 0 0 40px rgba(34, 197, 94, 0.15), 0 0 80px rgba(34, 197, 94, 0.05);
+}
+
+@utility glow-red {
+  box-shadow: 0 0 40px rgba(239, 68, 68, 0.15), 0 0 80px rgba(239, 68, 68, 0.05);
+}
+
+/* ============ ANIMATIONS ============ */
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+
+@keyframes slide-up {
+  from { transform: translateY(10px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes count-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+@keyframes scan-line {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100vh); }
+}
+
+@keyframes fade-in-out {
+  0% { opacity: 0; transform: translateY(-4px); }
+  10% { opacity: 1; transform: translateY(0); }
+  90% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@utility animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+@utility animate-slide-up {
+  animation: slide-up 0.4s ease-out;
+}
+
+@utility animate-count-pulse {
+  animation: count-pulse 0.3s ease-out;
+}
+
+@utility animate-fade-in-out {
+  animation: fade-in-out 4s ease-in-out forwards;
+}
+
+/* Grid background */
+@utility grid-bg {
+  background-image: 
+    linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+}

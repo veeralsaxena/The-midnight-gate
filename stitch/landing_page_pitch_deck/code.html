@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>The Midnight Gate | Survive the Strike</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Outfit:wght@300;400;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#06e8f9",
+                        "background-light": "#f5f8f8",
+                        "background-dark": "#050b0c",
+                        "midnight": "#020617",
+                        "nebula": "#1e1b4b"
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"],
+                        "body": ["Outfit", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .glass {
+            background: rgba(6, 232, 249, 0.03);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(6, 232, 249, 0.1);
+        }
+        .hero-gradient {
+            background: radial-gradient(circle at 50% 50%, #1e1b4b 0%, #050b0c 100%);
+        }
+        .text-gradient {
+            background: linear-gradient(to right, #06e8f9, #ffffff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .line-glow {
+            box-shadow: 0 0 15px rgba(6, 232, 249, 0.4);
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-body text-slate-900 dark:text-slate-100 overflow-x-hidden">
+<div class="relative flex min-h-screen w-full flex-col">
+<!-- Navigation -->
+<header class="fixed top-0 z-50 w-full border-b border-primary/10 bg-background-dark/80 backdrop-blur-md px-6 py-4 lg:px-20">
+<div class="mx-auto flex max-w-7xl items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+<span class="material-symbols-outlined text-3xl">shield_with_heart</span>
+</div>
+<h2 class="font-display text-xl font-bold tracking-tight">The Midnight Gate</h2>
+</div>
+<nav class="hidden gap-8 lg:flex">
+<a class="text-sm font-medium transition-colors hover:text-primary" href="#">Architecture</a>
+<a class="text-sm font-medium transition-colors hover:text-primary" href="#">Innovations</a>
+<a class="text-sm font-medium transition-colors hover:text-primary" href="#">Benchmarks</a>
+<a class="text-sm font-medium transition-colors hover:text-primary" href="#">Documentation</a>
+</nav>
+<button class="rounded-full bg-primary px-6 py-2 text-sm font-bold text-background-dark transition-transform active:scale-95">
+                    Deploy Now
+                </button>
+</div>
+</header>
+<!-- Hero Section -->
+<section class="hero-gradient relative flex min-h-screen items-center justify-center overflow-hidden px-6 pt-20">
+<div class="absolute inset-0 opacity-20" style="background-image: radial-gradient(circle at 20% 30%, #4c1d95 0%, transparent 40%), radial-gradient(circle at 80% 70%, #064e3b 0%, transparent 40%);"></div>
+<div class="relative z-10 mx-auto max-w-4xl text-center">
+<div class="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-primary">
+<span class="relative flex h-2 w-2">
+<span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75"></span>
+<span class="relative inline-flex h-2 w-2 rounded-full bg-primary"></span>
+</span>
+                    Infrastructure Redefined
+                </div>
+<h1 class="font-display text-5xl font-black leading-tight tracking-tighter md:text-7xl lg:text-8xl">
+<span class="text-gradient">The Midnight Gate:</span> <br/>
+<span class="text-slate-100">Survive the Strike</span>
+</h1>
+<p class="mx-auto mt-8 max-w-2xl text-lg text-slate-400 md:text-xl">
+                    High-performance resilient infrastructure engineered to withstand 100x traffic spikes. Deep space glassmorphism meets mission-critical reliability.
+                </p>
+<div class="mt-12 flex flex-wrap justify-center gap-4">
+<button class="h-14 min-w-[200px] rounded-xl bg-primary px-8 text-lg font-bold text-background-dark shadow-lg shadow-primary/20">
+                        Launch Infrastructure
+                    </button>
+<button class="glass h-14 min-w-[200px] rounded-xl px-8 text-lg font-bold text-slate-100">
+                        View System Specs
+                    </button>
+</div>
+</div>
+</section>
+<!-- Architecture Funnel Section -->
+<section class="bg-background-dark py-24 lg:px-20">
+<div class="mx-auto max-w-5xl px-6 text-center">
+<h2 class="font-display text-4xl font-bold tracking-tight text-white">The Resilience Stack</h2>
+<p class="mt-4 text-slate-400">Multi-layered defensive architecture for extreme availability</p>
+<div class="mt-20 flex flex-col items-center">
+<!-- Layer 1 -->
+<div class="glass flex w-full max-w-2xl items-center gap-6 rounded-2xl p-6 transition-all hover:bg-primary/5">
+<div class="flex size-14 shrink-0 items-center justify-center rounded-xl bg-primary/20 text-primary">
+<span class="material-symbols-outlined text-3xl">public</span>
+</div>
+<div class="text-left">
+<h3 class="font-display text-xl font-bold text-white">CDN Edge</h3>
+<p class="text-sm text-slate-400">Layer 1: Global distribution and static asset offloading</p>
+</div>
+</div>
+<div class="h-12 w-px bg-gradient-to-b from-primary to-transparent opacity-50 line-glow"></div>
+<!-- Layer 2 -->
+<div class="glass flex w-full max-w-xl items-center gap-6 rounded-2xl p-6 transition-all hover:bg-primary/5">
+<div class="flex size-14 shrink-0 items-center justify-center rounded-xl bg-primary/20 text-primary">
+<span class="material-symbols-outlined text-3xl">speed</span>
+</div>
+<div class="text-left">
+<h3 class="font-display text-xl font-bold text-white">Rate Limiter</h3>
+<p class="text-sm text-slate-400">Layer 2: Adaptive traffic throttling and WAF filtering</p>
+</div>
+</div>
+<div class="h-12 w-px bg-gradient-to-b from-primary to-transparent opacity-50 line-glow"></div>
+<!-- Layer 3 -->
+<div class="glass flex w-full max-w-lg items-center gap-6 rounded-2xl p-6 transition-all hover:bg-primary/5">
+<div class="flex size-14 shrink-0 items-center justify-center rounded-xl bg-primary/20 text-primary">
+<span class="material-symbols-outlined text-3xl">key</span>
+</div>
+<div class="text-left">
+<h3 class="font-display text-xl font-bold text-white">Redis Gate</h3>
+<p class="text-sm text-slate-400">Layer 3: Sub-millisecond session validation</p>
+</div>
+</div>
+<div class="h-12 w-px bg-gradient-to-b from-primary to-transparent opacity-50 line-glow"></div>
+<!-- Layer 4 -->
+<div class="glass flex w-full max-w-md items-center gap-6 rounded-2xl p-6 transition-all hover:bg-primary/5">
+<div class="flex size-14 shrink-0 items-center justify-center rounded-xl bg-primary/20 text-primary">
+<span class="material-symbols-outlined text-3xl">reorder</span>
+</div>
+<div class="text-left">
+<h3 class="font-display text-xl font-bold text-white">BullMQ Task Queue</h3>
+<p class="text-sm text-slate-400">Layer 4: Decoupled asynchronous job processing</p>
+</div>
+</div>
+<div class="h-12 w-px bg-gradient-to-b from-primary to-transparent opacity-50 line-glow"></div>
+<!-- Layer 5 -->
+<div class="glass flex w-full max-w-sm items-center gap-6 rounded-2xl p-6 transition-all hover:bg-primary/5">
+<div class="flex size-14 shrink-0 items-center justify-center rounded-xl bg-primary/20 text-primary">
+<span class="material-symbols-outlined text-3xl">database</span>
+</div>
+<div class="text-left">
+<h3 class="font-display text-xl font-bold text-white">Postgres Core</h3>
+<p class="text-sm text-slate-400">Layer 5: High-availability relational persistence</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Innovations Bento Grid -->
+<section class="bg-background-dark py-24 lg:px-20">
+<div class="mx-auto max-w-7xl px-6">
+<div class="mb-16">
+<h2 class="font-display text-4xl font-bold text-white">System Innovations</h2>
+<p class="mt-4 text-slate-400">Proprietary protocols for the next era of infrastructure.</p>
+</div>
+<div class="grid grid-cols-1 gap-6 md:grid-cols-3 md:grid-rows-2">
+<!-- Heartbeat -->
+<div class="glass col-span-1 flex flex-col justify-between overflow-hidden rounded-3xl p-8 md:col-span-2">
+<div>
+<div class="mb-4 flex size-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+<span class="material-symbols-outlined">favorite</span>
+</div>
+<h3 class="font-display text-2xl font-bold text-white">Reactive Heartbeat</h3>
+<p class="mt-4 max-w-md text-slate-400">Continuous health telemetry with sub-millisecond precision. Automatically reroutes traffic before failure occurs.</p>
+</div>
+<div class="mt-8 flex gap-2">
+<span class="rounded-full bg-primary/10 px-3 py-1 text-xs text-primary">Active Monitoring</span>
+<span class="rounded-full bg-primary/10 px-3 py-1 text-xs text-primary">0.5ms Latency</span>
+</div>
+<div class="absolute -right-10 -top-10 size-48 rounded-full bg-primary/10 blur-3xl"></div>
+</div>
+<!-- Load Shedding -->
+<div class="glass col-span-1 rounded-3xl p-8">
+<div class="mb-4 flex size-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+<span class="material-symbols-outlined">filter_list</span>
+</div>
+<h3 class="font-display text-2xl font-bold text-white">Load Shedding</h3>
+<p class="mt-4 text-slate-400">Graceful degradation under extreme duress. Protects critical transactions over low-priority requests.</p>
+<div class="mt-8 h-2 w-full overflow-hidden rounded-full bg-slate-800">
+<div class="h-full w-2/3 bg-primary"></div>
+</div>
+</div>
+<!-- Lua Scripts -->
+<div class="glass col-span-1 rounded-3xl p-8">
+<div class="mb-4 flex size-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+<span class="material-symbols-outlined">code</span>
+</div>
+<h3 class="font-display text-2xl font-bold text-white">Atomic Lua</h3>
+<p class="mt-4 text-slate-400">High-performance database logic executed directly at the storage edge for zero-latency state transitions.</p>
+</div>
+<!-- Distribution -->
+<div class="glass col-span-1 flex flex-col justify-between rounded-3xl p-8 md:col-span-2">
+<div class="flex items-start justify-between">
+<div>
+<h3 class="font-display text-2xl font-bold text-white">Global Distribution</h3>
+<p class="mt-4 max-w-md text-slate-400">Deployment across 42 availability zones with automatic geo-steering.</p>
+</div>
+<div class="flex size-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+<span class="material-symbols-outlined">language</span>
+</div>
+</div>
+<div class="mt-12 flex items-center justify-between border-t border-primary/10 pt-6">
+<div class="text-center">
+<div class="text-2xl font-bold text-white">99.99%</div>
+<div class="text-xs text-slate-500 uppercase">Uptime</div>
+</div>
+<div class="text-center">
+<div class="text-2xl font-bold text-white">&lt;20ms</div>
+<div class="text-xs text-slate-500 uppercase">Avg. Latency</div>
+</div>
+<div class="text-center">
+<div class="text-2xl font-bold text-white">1.2B</div>
+<div class="text-xs text-slate-500 uppercase">Requests/Day</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Stats Bar -->
+<footer class="fixed bottom-6 left-1/2 z-50 w-full max-w-5xl -translate-x-1/2 px-6">
+<div class="glass flex items-center justify-between rounded-2xl p-4 shadow-2xl shadow-primary/10">
+<div class="flex gap-12 px-6">
+<div class="flex items-center gap-3">
+<span class="relative flex h-2 w-2">
+<span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+<span class="relative inline-flex h-2 w-2 rounded-full bg-emerald-400"></span>
+</span>
+<div>
+<p class="text-[10px] font-bold uppercase tracking-wider text-slate-500">System Status</p>
+<p class="text-sm font-bold text-emerald-400">Operational</p>
+</div>
+</div>
+<div class="hidden md:block">
+<p class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Current Load</p>
+<p class="text-sm font-bold text-white">12,450 req/sec</p>
+</div>
+<div class="hidden md:block">
+<p class="text-[10px] font-bold uppercase tracking-wider text-slate-500">P99 Latency</p>
+<p class="text-sm font-bold text-white">8.4 ms</p>
+</div>
+</div>
+<button class="flex items-center gap-2 rounded-lg bg-primary/10 px-4 py-2 text-sm font-bold text-primary transition-colors hover:bg-primary/20">
+<span class="material-symbols-outlined text-lg">terminal</span>
+                    Live Logs
+                </button>
+</div>
+</footer>
+<!-- Spacer for footer -->
+<div class="h-32 bg-background-dark"></div>
+</div>
+</body></html>

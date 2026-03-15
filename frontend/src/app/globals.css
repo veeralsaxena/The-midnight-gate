@@ -11,6 +11,29 @@
   --color-acm-pure: #000000;
   --color-acm-card: #0D0D0D;
   --color-acm-border: rgba(255, 255, 255, 0.06);
+
+  /* Stitch AI UI Theme Elements */
+  --color-primary: #00F0FF;
+  --color-background-dark: #0A0A16;
+  --color-nebula: #2D0B59;
+  --color-surface: rgba(255, 255, 255, 0.03);
+  --color-border-glass: rgba(255, 255, 255, 0.1);
+  --color-text-main: #F8F9FA;
+  --color-muted: #8F9BB3;
+  --color-danger: #FF00E5;
+  --color-terminal-bg: #05050A;
+
+  --animate-pulse-alert: pulseAlert 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --animate-terminal-scroll: scrollLines 10s linear infinite;
+
+  @keyframes pulseAlert {
+    0%, 100% { opacity: 1; box-shadow: inset 0 0 20px rgba(255, 0, 229, 0.5), 0 0 30px rgba(255, 0, 229, 0.3); }
+    50% { opacity: 0.7; box-shadow: inset 0 0 10px rgba(255, 0, 229, 0.2), 0 0 15px rgba(255, 0, 229, 0.1); }
+  }
+  @keyframes scrollLines {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(-50%); }
+  }
   
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;

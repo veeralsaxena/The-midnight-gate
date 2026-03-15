@@ -1,15 +1,57 @@
 const express = require('express');
 const { atomicReserve, releaseReservation, confirmReservation, getInventory, getMetrics } = require('../redis/scripts');
 const { enqueueOrder } = require('../queue/orderQueue');
+const { anomalyMiddleware } = require('../ml/anomalyDetector');
 const { v4: uuidv4 } = require('uuid');
 
 const router = express.Router();
+const redis = require('../redis/client');
+
+// Function to get recommendations using Redis Vector Search (RediSearch)
+async function getRecommendations(productId, limit = 3) {
+    try {
+        const productData = await redis.hgetall(`product_data:${productId}`);
+        if (!productData || !productData.embedding) return [];
+
+        const embeddingBuffer = productData.embedding;
+        // Search for nearest neighbors. We fetch 6 to account for current product or out-of-stock
+        const results = await redis.call(
+            'FT.SEARCH',
+            'idx:products',
+            '*=>[KNN 6 @embedding $vec AS score]',
+            'PARAMS', '2', 'vec', embeddingBuffer,
+            'DIALECT', '2'
+        );
+
+        const products = [];
+        for (let i = 1; i < results.length; i += 2) {
+            const fields = results[i + 1];
+            const p = {};
+            for (let j = 0; j < fields.length; j += 2) {
+                p[fields[j]] = fields[j + 1];
+            }
+            if (p.id && parseInt(p.id) !== parseInt(productId)) {
+                // Eagerly fetch atomic inventory
+                const stock = await redis.get(`product:${p.id}:inventory`);
+                if (parseInt(stock) > 0) {
+                    p.inventory = parseInt(stock);
+                    delete p.embedding; // don't send buffer to client
+                    products.push(p);
+                }
+            }
+        }
+        return products.slice(0, limit);
+    } catch (err) {
+        console.error('Vector search error:', err);
+        return [];
+    }
+}
 
 // ============================================================
 // POST /api/reserve — The Gate (Step 1 of 2)
 // Atomically reserves an item. Returns checkout token.
 // ============================================================
-router.post('/reserve', async (req, res) => {
+router.post('/reserve', anomalyMiddleware, async (req, res) => {
     const userId = req.body.userId;
     const productId = req.body.productId || 1;
     const socketId = req.body.socketId;
@@ -45,7 +87,12 @@ router.post('/reserve', async (req, res) => {
         }
 
         if (result === 0) {
-            return res.status(400).json({ error: "SOLD OUT! Better luck next time. />", code: "SOLD_OUT" });
+            const recommendations = await getRecommendations(productId, 3);
+            return res.status(400).json({ 
+                error: "SOLD OUT! Better luck next time. />", 
+                code: "SOLD_OUT",
+                recommendations
+            });
         }
 
         // Success! User reserved an item
@@ -95,7 +142,7 @@ router.post('/reserve', async (req, res) => {
 // POST /api/confirm — Payment Confirmation (Step 2 of 2)
 // Confirms reservation and queues order for DB write
 // ============================================================
-router.post('/confirm', async (req, res) => {
+router.post('/confirm', anomalyMiddleware, async (req, res) => {
     const userId = req.body.userId;
     const productId = req.body.productId || 1;
     const checkoutToken = req.body.checkoutToken;

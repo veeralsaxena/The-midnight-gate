@@ -21,7 +21,7 @@ services:
   # Stores: inventory counts, reservation keys (with TTL), user sets
   # Must be running before the backend starts
   redis:
-    image: redis:alpine
+    image: redis/redis-stack-server:latest
     ports:
       - "6380:6379"   # Host:Container — avoids conflict with local Redis
     volumes:

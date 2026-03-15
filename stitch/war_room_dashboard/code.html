@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Midnight Gate War Room</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&amp;family=Outfit:wght@400;500&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#00F0FF",
+                        "background-light": "#0A0A16",
+                        "background-dark": "#0A0A16",
+                        "nebula": "#2D0B59",
+                        "surface": "rgba(255, 255, 255, 0.03)",
+                        "border-glass": "rgba(255, 255, 255, 0.1)",
+                        "text-main": "#F8F9FA",
+                        "muted": "#8F9BB3",
+                        "danger": "#FF00E5",
+                        "terminal-bg": "#05050A"
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"],
+                        "body": ["Outfit", "sans-serif"],
+                        "mono": ["JetBrains Mono", "monospace"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "8px",
+                        "md": "16px",
+                        "lg": "24px",
+                        "full": "9999px"
+                    },
+                    boxShadow: {
+                        "glass": "0 4px 30px rgba(0, 0, 0, 0.5)",
+                        "glow": "0 0 20px rgba(0, 240, 255, 0.4)",
+                        "alert": "0 0 30px rgba(255, 0, 229, 0.3)"
+                    },
+                    animation: {
+                        "pulse-alert": "pulseAlert 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+                        "terminal-scroll": "scrollLines 10s linear infinite",
+                    },
+                    keyframes: {
+                        pulseAlert: {
+                            '0%, 100%': { opacity: 1, boxShadow: 'inset 0 0 20px rgba(255, 0, 229, 0.5), 0 0 30px rgba(255, 0, 229, 0.3)' },
+                            '50%': { opacity: .7, boxShadow: 'inset 0 0 10px rgba(255, 0, 229, 0.2), 0 0 15px rgba(255, 0, 229, 0.1)' },
+                        },
+                        scrollLines: {
+                            '0%': { transform: 'translateY(0)' },
+                            '100%': { transform: 'translateY(-50%)' },
+                        }
+                    }
+                },
+            },
+        }
+    </script>
+<style type="text/tailwindcss">
+        @layer utilities {
+            .glass-panel {
+                @apply bg-surface backdrop-blur-[16px] border border-border-glass rounded-md shadow-glass;
+            }
+            .text-glow {
+                text-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+            }
+            .text-glow-danger {
+                text-shadow: 0 0 10px rgba(255, 0, 229, 0.5);
+            }
+            .bg-radial-nebula {
+                background: radial-gradient(circle at 50% 0%, rgba(45, 11, 89, 0.5) 0%, rgba(10, 10, 22, 1) 70%);
+            }
+        }
+    </style>
+</head>
+<body class="bg-background-dark text-text-main font-body min-h-screen overflow-x-hidden relative">
+<!-- Background Gradient -->
+<div class="fixed inset-0 pointer-events-none bg-radial-nebula z-0"></div>
+<!-- Alert Border Overlay (Simulated Under Load State) -->
+<div class="fixed inset-0 pointer-events-none border-[3px] border-danger animate-pulse-alert opacity-50 z-50"></div>
+<div class="relative z-10 flex flex-col h-full min-h-screen">
+<!-- Header -->
+<header class="flex items-center justify-between border-b border-border-glass px-8 py-4 backdrop-blur-md bg-background-dark/50 sticky top-0 z-40">
+<div class="flex items-center gap-4">
+<div class="size-8 text-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-[32px]">security</span>
+</div>
+<h1 class="font-display text-2xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-primary to-text-main">
+                    Midnight Gate War Room
+                </h1>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2">
+<span class="relative flex h-3 w-3">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-danger opacity-75"></span>
+<span class="relative inline-flex rounded-full h-3 w-3 bg-danger"></span>
+</span>
+<span class="font-mono text-[13px] text-danger font-medium tracking-wide">LOAD SHEDDING ACTIVE</span>
+</div>
+<nav class="flex gap-6 font-display text-sm font-medium text-muted hidden md:flex">
+<a class="hover:text-primary transition-colors text-primary border-b border-primary pb-1" href="#">Dashboard</a>
+<a class="hover:text-primary transition-colors" href="#">Metrics</a>
+<a class="hover:text-primary transition-colors" href="#">Logs</a>
+</nav>
+</div>
+</header>
+<!-- Main Content Grid -->
+<main class="flex-1 p-6 lg:p-8 flex flex-col gap-6 max-w-[1600px] mx-auto w-full">
+<!-- Top Metrics Row -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+<!-- Metric 1 -->
+<div class="glass-panel p-6 flex flex-col gap-2 relative overflow-hidden group">
+<div class="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<p class="text-muted text-sm font-medium flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">wifi</span>
+                        Active WS Connections
+                    </p>
+<p class="font-mono text-[32px] font-bold text-primary text-glow">24,502</p>
+<div class="h-1 w-full bg-border-glass mt-2 rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[85%] rounded-full shadow-glow"></div>
+</div>
+</div>
+<!-- Metric 2 -->
+<div class="glass-panel p-6 flex flex-col gap-2">
+<p class="text-muted text-sm font-medium flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">inventory_2</span>
+                        Available Inventory
+                    </p>
+<p class="font-mono text-[32px] font-bold text-primary text-glow">143</p>
+<p class="font-mono text-[12px] text-danger">-857/sec velocity</p>
+</div>
+<!-- Metric 3 (Alert State) -->
+<div class="glass-panel p-6 flex flex-col gap-2 border-danger/50 shadow-alert relative overflow-hidden">
+<div class="absolute inset-0 bg-danger/10 animate-pulse"></div>
+<p class="text-muted text-sm font-medium flex items-center gap-2 relative z-10">
+<span class="material-symbols-outlined text-[16px] text-danger">warning</span>
+                        BullMQ Queue Depth
+                    </p>
+<p class="font-mono text-[32px] font-bold text-danger text-glow-danger relative z-10">842</p>
+<p class="font-mono text-[12px] text-danger relative z-10">&gt; 20 Threshold Exceeded</p>
+</div>
+<!-- Metric 4 -->
+<div class="glass-panel p-6 flex flex-col gap-2">
+<p class="text-muted text-sm font-medium flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">done_all</span>
+                        Total Processed
+                    </p>
+<p class="font-mono text-[32px] font-bold text-primary text-glow">18,400</p>
+<p class="font-mono text-[12px] text-muted">99.9% Success Rate</p>
+</div>
+</div>
+<!-- Lower Split Section -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 min-h-[500px]">
+<!-- Terminal Logs (Left 2/3) -->
+<div class="lg:col-span-2 glass-panel flex flex-col overflow-hidden border-border-glass">
+<div class="bg-black/40 border-b border-border-glass px-4 py-2 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-muted">terminal</span>
+<span class="font-mono text-[12px] text-muted tracking-wider">gate-worker-node-01.log</span>
+</div>
+<div class="flex gap-1.5">
+<div class="size-2.5 rounded-full bg-border-glass"></div>
+<div class="size-2.5 rounded-full bg-border-glass"></div>
+<div class="size-2.5 rounded-full bg-danger"></div>
+</div>
+</div>
+<div class="flex-1 bg-terminal-bg p-4 font-mono text-[13px] leading-relaxed overflow-hidden relative">
+<!-- Fade overlays -->
+<div class="absolute top-0 inset-x-0 h-8 bg-gradient-to-b from-terminal-bg to-transparent z-10 pointer-events-none"></div>
+<div class="absolute bottom-0 inset-x-0 h-8 bg-gradient-to-t from-terminal-bg to-transparent z-10 pointer-events-none"></div>
+<div class="flex flex-col gap-1 justify-end h-full">
+<div class="text-muted">[10:42:01.045] INFO  HTTP POST /api/reserve {"user_id": "u_948", "item": "snk_01"}</div>
+<div class="text-primary">[10:42:01.046] DEBUG Redis lock acquired (duration: 1ms)</div>
+<div class="text-muted">[10:42:01.048] INFO  HTTP POST /api/reserve {"user_id": "u_949", "item": "snk_01"}</div>
+<div class="text-primary">[10:42:01.050] DEBUG Redis lock acquired (duration: 2ms)</div>
+<div class="text-danger mt-2">[10:42:01.100] WARN  Queue depth critically high (840)</div>
+<div class="text-danger text-glow-danger font-bold">[10:42:01.101] ALERT Shedding excessive load. Limiter active.</div>
+<div class="text-muted">[10:42:01.102] REJECT HTTP 429 Too Many Requests (user_id: u_950)</div>
+<div class="text-muted">[10:42:01.103] REJECT HTTP 429 Too Many Requests (user_id: u_951)</div>
+<div class="text-muted">[10:42:01.103] REJECT HTTP 429 Too Many Requests (user_id: u_952)</div>
+<div class="text-primary mt-2">[10:42:01.150] DEBUG Worker processing batch [830-840]</div>
+<div class="text-muted">[10:42:01.155] REJECT HTTP 429 Too Many Requests (user_id: u_953)</div>
+<div class="text-danger text-glow-danger font-bold">[10:42:01.160] ALERT Shedding excessive load. Limiter active.</div>
+<div class="text-muted flex items-center gap-2 mt-1">
+<span class="animate-pulse w-2 h-4 bg-primary inline-block"></span>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Side Panels -->
+<div class="flex flex-col gap-6">
+<!-- Gauge Card -->
+<div class="glass-panel p-6 flex-1 flex flex-col items-center justify-center relative border-danger/30 shadow-alert">
+<h3 class="font-display text-lg font-bold text-text-main absolute top-6 left-6">System Load</h3>
+<!-- Circular Gauge Placeholder -->
+<div class="relative size-48 mt-8 flex items-center justify-center">
+<!-- Outer track -->
+<svg class="absolute inset-0 size-full transform -rotate-90" viewbox="0 0 100 100">
+<circle cx="50" cy="50" fill="none" r="45" stroke="rgba(255,255,255,0.05)" stroke-dasharray="283" stroke-linecap="round" stroke-width="8"></circle>
+<!-- Progress (Simulated ~95%) -->
+<circle class="drop-shadow-[0_0_8px_rgba(255,0,229,0.8)]" cx="50" cy="50" fill="none" r="45" stroke="#FF00E5" stroke-dasharray="283" stroke-dashoffset="15" stroke-linecap="round" stroke-width="8"></circle>
+</svg>
+<div class="flex flex-col items-center justify-center text-center">
+<span class="material-symbols-outlined text-[32px] text-danger mb-1 animate-pulse">crisis_alert</span>
+<span class="font-mono text-3xl font-bold text-danger">95%</span>
+<span class="font-mono text-[10px] text-muted uppercase tracking-widest mt-1">Capacity</span>
+</div>
+</div>
+<div class="mt-8 w-full bg-danger/10 border border-danger/30 rounded p-3 flex items-start gap-3">
+<span class="material-symbols-outlined text-danger text-[20px] shrink-0">info</span>
+<div class="flex flex-col">
+<span class="font-mono text-[12px] text-danger font-bold">SHEDDING ACTIVE</span>
+<span class="font-mono text-[11px] text-muted mt-1">Rejecting ~850 req/sec at Edge to protect database consistency.</span>
+</div>
+</div>
+</div>
+<!-- Small Info Card -->
+<div class="glass-panel p-5 h-auto">
+<div class="flex justify-between items-center mb-4">
+<h4 class="font-display text-sm font-bold text-text-main">Database Nodes</h4>
+<span class="font-mono text-[12px] text-primary">Healthy</span>
+</div>
+<div class="space-y-3">
+<div class="flex items-center justify-between">
+<span class="font-mono text-[12px] text-muted">Primary-DB</span>
+<span class="font-mono text-[12px] text-text-main">32ms</span>
+</div>
+<div class="w-full bg-border-glass h-1 rounded-full overflow-hidden">
+<div class="bg-primary h-full w-[15%]"></div>
+</div>
+<div class="flex items-center justify-between mt-2">
+<span class="font-mono text-[12px] text-muted">Redis-Cache</span>
+<span class="font-mono text-[12px] text-text-main">2ms</span>
+</div>
+<div class="w-full bg-border-glass h-1 rounded-full overflow-hidden">
+<div class="bg-primary h-full w-[8%]"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

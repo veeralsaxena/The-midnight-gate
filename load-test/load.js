@@ -14,6 +14,7 @@ let confirmFailed = 0;
 let abandoned = 0;
 let errors = 0;
 let completed = 0;
+let botsBlocked = 0;
 
 function makeRequest(path, body) {
     return new Promise((resolve, reject) => {
@@ -33,8 +34,19 @@ function makeRequest(path, body) {
     });
 }
 
-async function simulateUser(i) {
-    const userId = `loadtest-user-${i}`;
+async function simulateUser(i, isBot = false) {
+    const userId = isBot ? `bot-scraper-${i}` : `loadtest-user-${i}`;
+    
+    if (isBot) {
+        // ML Filter Test: Aggressive bot doing 15 requests instantly
+        for (let b = 0; b < 15; b++) {
+            makeRequest('/api/reserve', { productId: 1, userId: userId }).then(r => {
+                if (r.status === 403) botsBlocked++;
+            }).catch(()=>{});
+        }
+        return;
+    }
+
     try {
         // Step 1: Reserve
         const reserveRes = await makeRequest('/api/reserve', { productId: 1, userId });
@@ -78,14 +90,26 @@ async function runLoadTest() {
     
     const startTime = Date.now();
 
-    // Fire all users simultaneously
-    const promises = [];
+    // Fire regular users
     for (let i = 0; i < NUM_USERS; i++) {
-        promises.push(simulateUser(i));
+        promises.push(simulateUser(i, false));
     }
+    
+    // Fire aggressive bots specifically to test the ML filter
+    for (let i = 0; i < 50; i++) {
+        promises.push(simulateUser(i, true));
+    }
+
     await Promise.all(promises);
+    
+    // Wait an extra second for bot async requests to resolve
+    await new Promise(r => setTimeout(r, 1000));
 
     const duration = Date.now() - startTime;
+    
+    // Some bots will get 400 SOLD OUT very quickly and not 403 if they don't trip the ML fast enough, 
+    // but the vast majority of their 15 hits will be 403 or 400.
+
 
     console.log(`\n✅ Load Test Complete in ${duration}ms!`);
     console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
@@ -93,6 +117,7 @@ async function runLoadTest() {
     console.log(`🛑 Clean Rejections:        ${reserveFailed}`);
     console.log(`💳 Payments Confirmed:      ${confirmSuccess}`);
     console.log(`💔 Abandoned (TTL Release): ${abandoned}`);
+    console.log(`🤖 Bots Blocked (ML Filter):${botsBlocked}`);
     console.log(`❌ Errors:                  ${errors}`);
     console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
     console.log(`\n⏳ Abandoned reservations will release via TTL in ~60s.`);
